@@ -5,14 +5,11 @@ import {Script, console} from "forge-std/Script.sol";
 // import your contracts here
 
 contract MyTokenScript is Script {
-
     // TokenIdoSale public idoSale;
 
     function setUp() public {}
 
     function run() public {
-
-        
         vm.startBroadcast();
 
         // deploy your contracts here
@@ -28,4 +25,3 @@ contract MyTokenScript is Script {
         vm.stopBroadcast();
     }
 }
-
