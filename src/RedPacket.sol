@@ -45,7 +45,7 @@ contract RedPacket is IRedPacket {
     /// @param _amount The amount of tokens to be included in the red packet
     /// @param _recipient The address of the recipient of the red packet
     function create(address _erc20, uint256 _amount, address _recipient) external {
-        address redPacketNft = redPacketFactory.createRedPacket(_erc20, _amount, _recipient);
+        address redPacketNft = redPacketFactory.createRedPacket( _recipient);
 
         bool success = IERC20(_erc20).transferFrom(msg.sender, redPacketNft, _amount);
 
