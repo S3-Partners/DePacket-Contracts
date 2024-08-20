@@ -4,15 +4,31 @@ pragma solidity ^0.8.20;
 import "./interface/IRedPacketFactory.sol";
 import "./interface/IRedPacketNFT.sol";
 import "./RedPacketNFT.sol";
-contract RedPacketFactory {
+import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "@openzeppelin/contracts/proxy/Clones.sol";
 
-    function createRedPacket( address recipient) external returns (address nftContract) {
+contract RedPacketFactory is Ownable {
+    RedPacketNFT nft;
+    address[] public deployedTokens;
 
+    event deployInscriptionEvent(address indexed tokenAddress, address indexed userAddress);
 
-        nftContract = address(new RedPacketNFT( recipient));
+    constructor(address initialOwner) Ownable(initialOwner) {}
 
-        
+    function setTokenAddress(address _tokenAddress) public onlyOwner {
+        nft = RedPacketNFT(_tokenAddress);
+    }
+
+    function createRedPacket(address recipient) external returns (address nftContract) {
+        // nftContract = address(new RedPacketNFT(recipient));
+        nftContract = Clones.clone(address(nft));
+
+        RedPacketNFT(nftContract).initialize(recipient);
+
+        deployedTokens.push(nftContract);
+
+        emit deployInscriptionEvent(nftContract, recipient);
 
         // create2 is used to deploy a contract with a specific address
 
@@ -22,12 +38,5 @@ contract RedPacketFactory {
         // assembly {
         //     nftContract := create2(0, add(bytecode, 32), mload(bytecode), salt)
         // }
-
-        
     }
-
-
-
-
-
 }
