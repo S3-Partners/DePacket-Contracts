@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Test, console} from "forge-std/Test.sol";
 
 contract RedPacketNFT is
     Initializable,
@@ -28,6 +29,7 @@ contract RedPacketNFT is
         address recipient;
         bool opened;
         address payToken;
+        address sendPacket;
     }
 
     mapping(uint256 => RedPacketInfo) private _redPackets;
@@ -43,24 +45,27 @@ contract RedPacketNFT is
         __ERC721Burnable_init();
         __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
+        console.log("create initialize");
     }
 
-    function openRedPacket(uint256 tokenId) public payable {
-        _openRedPacket(tokenId, feeTo);
+    function openRedPacket(uint256 tokenId, address recipient) public payable {
+        _openRedPacket(tokenId, recipient, feeTo);
     }
 
     // Open the red packet, transfers the token to the caller
-    function openRedPacket(uint256 tokenId, bytes calldata signature) external payable {
-        _openRedPacket(tokenId, address(0));
+    function openRedPacket(uint256 tokenId, address recipient, bytes calldata signature) external payable {
+        _openRedPacket(tokenId, recipient, address(0));
     }
 
-    function _openRedPacket(uint256 tokenId, address feeReceiver) private {
+    function _openRedPacket(uint256 tokenId, address recipient, address feeReceiver) private {
         RedPacketInfo storage packet = _redPackets[tokenId];
         require(!packet.opened, "Already opened");
-        require(msg.sender == packet.recipient, "Not authorized");
+        console.log("address(this): ", address(this));
+
+        require(recipient == packet.recipient, "Not authorized");
 
         packet.opened = true;
-        safeTransferFrom(address(this), msg.sender, tokenId);
+        safeTransferFrom(packet.sendPacket, recipient, tokenId);
 
         // trasnfer token
         // fee 0.3% or 0
@@ -71,10 +76,10 @@ contract RedPacketNFT is
         } else {
             require(msg.value == 0, "RPK: ETH value should be zero");
         }
-        _transferOut(packet.payToken, msg.sender, packet.amount - fee);
+        _transferOut(packet.payToken, recipient, packet.amount - fee);
         if (fee > 0) _transferOut(packet.payToken, feeReceiver, fee);
 
-        emit OpenRedPacketEvent(tokenId, msg.sender, fee);
+        emit OpenRedPacketEvent(tokenId, recipient, fee);
     }
 
     function _transferOut(address token, address to, uint256 amount) private {
@@ -93,15 +98,16 @@ contract RedPacketNFT is
     function createRedPacket(address to, string memory uri, address _erc20, uint256 _amount, address _recipient)
         public
         payable
-        onlyOwner
     {
-        require(msg.value == _amount, "Amount must be equal to the value sent");
+        // require(msg.value == _amount, "Amount must be equal to the value sent");
 
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
+        console.log("Created new red packet with token ID: %s", tokenId);
         _setTokenURI(tokenId, uri);
 
-        _redPackets[tokenId] = RedPacketInfo({amount: _amount, recipient: _recipient, opened: false, payToken: _erc20});
+        _redPackets[tokenId] =
+            RedPacketInfo({amount: _amount, recipient: _recipient, opened: false, payToken: _erc20, sendPacket: to});
 
         emit CreatedRedPacket(tokenId, to, _amount, _recipient);
     }

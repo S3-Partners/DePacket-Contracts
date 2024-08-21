@@ -11,8 +11,9 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 contract RedPacketFactory is Ownable {
     RedPacketNFT nft;
     address[] public deployedTokens;
+    mapping(address => address) public tokenDeployUser;
 
-    event deployInscriptionEvent(address indexed tokenAddress, address indexed userAddress);
+    event RedPacketDeployed(address indexed tokenAddress, address indexed userAddress, address indexed recipient);
 
     constructor(address initialOwner) Ownable(initialOwner) {}
 
@@ -20,26 +21,25 @@ contract RedPacketFactory is Ownable {
         nft = RedPacketNFT(_tokenAddress);
     }
 
-    function createRedPacket(address _erc20, uint256 _amount, address _recipient, string memory _uri)
+    function createRedPacket(address to, address _erc20, uint256 _amount, address _recipient, string memory _uri)
         external
         returns (address nftContract)
     {
-        // nftContract = address(new RedPacketNFT(recipient));
+        require(to != address(0), "Invalid 'to' address");
+        require(_recipient != address(0), "Invalid recipient address");
+
         nftContract = Clones.clone(address(nft));
 
         RedPacketNFT(nftContract).initialize(_recipient);
-        RedPacketNFT(nftContract).createRedPacket(msg.sender, _uri, _erc20, _amount, _recipient);
+        RedPacketNFT(nftContract).createRedPacket(to, _uri, _erc20, _amount, _recipient);
         deployedTokens.push(nftContract);
+        tokenDeployUser[nftContract] = to;
+        console.log("create RedPacket");
 
-        emit deployInscriptionEvent(nftContract, _recipient);
+        emit RedPacketDeployed(nftContract, to, _recipient);
+    }
 
-        // create2 is used to deploy a contract with a specific address
-
-        // bytes memory bytecode = type(RedPacketNFT).creationCode;
-        // bytes32 salt = keccak256(abi.encodePacked(erc20Address, amount, recipient));
-
-        // assembly {
-        //     nftContract := create2(0, add(bytecode, 32), mload(bytecode), salt)
-        // }
+    function size() public view returns (uint256) {
+        return deployedTokens.length;
     }
 }

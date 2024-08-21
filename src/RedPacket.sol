@@ -5,6 +5,7 @@ import "./interface/IRedPacketFactory.sol";
 import "./interface/IRedPacketNFT.sol";
 import "./interface/IRedPacket.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Test, console} from "forge-std/Test.sol";
 
 contract RedPacket is IRedPacket {
     ///////////////////
@@ -34,8 +35,8 @@ contract RedPacket is IRedPacket {
 
     /// @notice Opens a red packet NFT
     /// @param _redPacketNft The address of the red packet NFT to open
-    function open(address _redPacketNft) external {
-        IRedPacketNFT(_redPacketNft).openRedPacket();
+    function open(address _redPacketNft, uint256 tokenId) external {
+        IRedPacketNFT(_redPacketNft).openRedPacket(tokenId, msg.sender);
         emit RedPacketOpened(_redPacketNft);
     }
 
@@ -44,7 +45,7 @@ contract RedPacket is IRedPacket {
     /// @param _amount The amount of tokens to be included in the red packet
     /// @param _recipient The address of the recipient of the red packet
     function create(address _erc20, uint256 _amount, address _recipient) external {
-        address redPacketNft = redPacketFactory.createRedPacket(_erc20, _amount, _recipient, url);
+        address redPacketNft = redPacketFactory.createRedPacket(msg.sender, _erc20, _amount, _recipient, url);
 
         bool success = IERC20(_erc20).transferFrom(msg.sender, redPacketNft, _amount);
 

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IRedPacketNFT {
-    function openRedPacket() external;
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
+interface IRedPacketNFT is IERC721 {
+    function openRedPacket(uint256 tokenId, address recipient) external;
 }
