@@ -4,53 +4,45 @@ pragma solidity ^0.8.0;
 import "./interface/IRedPacketFactory.sol";
 import "./interface/IRedPacketNFT.sol";
 import "./interface/IRedPacket.sol";
+import "./interface/IERC6551Account.sol";
+import "./interface/IERC6551Registry.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
+
 
 contract RedPacket is IRedPacket {
-    ///////////////////
-    // Errors
-    ///////////////////
+    IRedPacketFactory public factory;
 
-    error RedPacket__ERC20TransferFailed();
+    address public registerAddress;
 
-    ///////////////////
-    // State Variables
-    ///////////////////
+    // event RedPacketCreated(address walletContract, address recipient, address _erc20, uint amount);
+    event RedPacketOpened(address redPacketNft, address recipient, uint256 amount);
 
-    IRedPacketFactory public immutable redPacketFactory;
-
-    ///////////////////
-    // Constructor
-    ///////////////////
-
-    constructor(address _redPacketFactory) {
-        redPacketFactory = IRedPacketFactory(_redPacketFactory);
+    constructor(address _factory) {
+        factory = IRedPacketFactory(_factory);
     }
 
-    ///////////////////
-    // External Functions
-    ///////////////////
+    error RedPacket_Transfer_Failed();
 
-    /// @notice Opens a red packet NFT
-    /// @param _redPacketNft The address of the red packet NFT to open
-    function open(address _redPacketNft) external {
-        IRedPacketNFT(_redPacketNft).openRedPacket();
-        emit RedPacketOpened(_redPacketNft);
+    function createRedPacket(address recipient, address _erc20, uint256 amount)
+        external
+        returns (address walletContract)
+    {
+        walletContract = factory.createRedPacket(recipient);
+        
+
+        _transferUsdtIntoRedPacket(walletContract, _erc20, amount);
+
+        emit RedPacketCreated(walletContract, recipient, _erc20, amount);
     }
 
-    /// @notice Creates a new red packet
-    /// @param _erc20 The address of the ERC20 token to be used
-    /// @param _amount The amount of tokens to be included in the red packet
-    /// @param _recipient The address of the recipient of the red packet
-    function create(address _erc20, uint256 _amount, address _recipient) external {
-        address redPacketNft = redPacketFactory.createRedPacket(_recipient);
+    
 
-        bool success = IERC20(_erc20).transferFrom(msg.sender, redPacketNft, _amount);
 
-        if (!success) {
-            revert RedPacket__ERC20TransferFailed();
-        }
+    function _transferUsdtIntoRedPacket(address _nft_wallet, address _erc20, uint256 amount) internal {
+        bool result = IERC20(_erc20).transferFrom(msg.sender, _nft_wallet, amount);
 
-        emit RedPacketCreated(redPacketNft);
+        if (!result) revert RedPacket_Transfer_Failed();
     }
 }
