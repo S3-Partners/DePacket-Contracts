@@ -49,7 +49,7 @@ contract RedPacketTest is Test {
 
         token.mint(owner.addr, amount);
         factory.setTokenAddress(address(nft));
-        token.approve(address(nft), amount);
+        token.approve(address(redpacket), amount);
         vm.stopPrank();
     }
 

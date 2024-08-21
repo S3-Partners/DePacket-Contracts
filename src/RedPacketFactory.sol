@@ -20,15 +20,18 @@ contract RedPacketFactory is Ownable {
         nft = RedPacketNFT(_tokenAddress);
     }
 
-    function createRedPacket(address recipient) external returns (address nftContract) {
+    function createRedPacket(address _erc20, uint256 _amount, address _recipient, string memory _uri)
+        external
+        returns (address nftContract)
+    {
         // nftContract = address(new RedPacketNFT(recipient));
         nftContract = Clones.clone(address(nft));
 
-        RedPacketNFT(nftContract).initialize(recipient);
-
+        RedPacketNFT(nftContract).initialize(_recipient);
+        RedPacketNFT(nftContract).createRedPacket(msg.sender, _uri, _erc20, _amount, _recipient);
         deployedTokens.push(nftContract);
 
-        emit deployInscriptionEvent(nftContract, recipient);
+        emit deployInscriptionEvent(nftContract, _recipient);
 
         // create2 is used to deploy a contract with a specific address
 
