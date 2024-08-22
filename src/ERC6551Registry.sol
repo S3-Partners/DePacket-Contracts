@@ -3,8 +3,6 @@ pragma solidity ^0.8.4;
 
 import "./interface/IERC6551Registry.sol";
 
-
-
 contract ERC6551Registry is IERC6551Registry {
     function createAccount(
         address implementation,
@@ -82,13 +80,11 @@ contract ERC6551Registry is IERC6551Registry {
         }
     }
 
-    function account(
-        address implementation,
-        bytes32 salt,
-        uint256 chainId,
-        address tokenContract,
-        uint256 tokenId
-    ) external view returns (address) {
+    function account(address implementation, bytes32 salt, uint256 chainId, address tokenContract, uint256 tokenId)
+        external
+        view
+        returns (address)
+    {
         assembly {
             // Silence unused variable warnings
             pop(chainId)

@@ -2,6 +2,8 @@
 pragma solidity ^0.8.20;
 
 import "./ERC6551Registry.sol";
+import {Test, console} from "forge-std/Test.sol";
+import "forge-std/console.sol";
 
 import "./ERC6551Account.sol";
 import "./interface/IRedPacketNFT.sol";
@@ -15,7 +17,7 @@ contract RedPacketFactory {
     address public implementation;
 
     address public nftContract;
-    
+
     uint256 chainId = block.chainid;
 
     error RedPacketFactory__NotOwner();
@@ -35,9 +37,9 @@ contract RedPacketFactory {
         implementation = _implementation;
     }
 
-    function getAccount( uint256 _tokenId) external view returns (address) {
-        bytes32 salt = keccak256(abi.encodePacked(address(nftContract), uint(_tokenId)));
-        
+    function getAccount(uint256 _tokenId) external view returns (address) {
+        // bytes32 salt = keccak256(abi.encodePacked(address(nftContract), uint256(_tokenId)));
+        bytes32 salt = bytes32(uint256(_tokenId + 100000));
         address account = registry.account(address(implementation), salt, chainId, nftContract, _tokenId);
         return account;
     }
@@ -46,8 +48,9 @@ contract RedPacketFactory {
         // mint nft token
         uint256 tokenId = IRedPacketNFT(nftContract).mint(address(this));
 
-        bytes32 salt = keccak256(abi.encodePacked(nftContract, tokenId));
-        
+        // bytes32 salt = keccak256(abi.encodePacked(nftContract, tokenId));
+        bytes32 salt = bytes32(uint256(tokenId + 100000));
+
         // create account
         address redPacketAddress = registry.createAccount(implementation, salt, chainId, nftContract, tokenId);
 

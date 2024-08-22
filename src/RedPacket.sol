@@ -9,8 +9,6 @@ import "./interface/IERC6551Registry.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-
-
 contract RedPacket is IRedPacket {
     IRedPacketFactory public factory;
 
@@ -30,15 +28,11 @@ contract RedPacket is IRedPacket {
         returns (address walletContract)
     {
         walletContract = factory.createRedPacket(recipient);
-        
 
         _transferUsdtIntoRedPacket(walletContract, _erc20, amount);
 
         emit RedPacketCreated(walletContract, recipient, _erc20, amount);
     }
-
-    
-
 
     function _transferUsdtIntoRedPacket(address _nft_wallet, address _erc20, uint256 amount) internal {
         bool result = IERC20(_erc20).transferFrom(msg.sender, _nft_wallet, amount);

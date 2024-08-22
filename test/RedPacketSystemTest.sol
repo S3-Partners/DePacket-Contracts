@@ -6,7 +6,8 @@ import "forge-std/Test.sol";
 import "../src/RedPacketFactory.sol";
 import "../src/ReadPacketNFT.sol";
 import "../src/ERC6551Registry.sol";
-// import "../src/ERC6551Account.sol";
+import "../src/ERC6551Account.sol";
+import "../src/interface/IERC6551Account.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract RedPacketTest is Test {
@@ -25,7 +26,7 @@ contract RedPacketTest is Test {
 
         // Deploy contracts
         nft = new ReadPacketNFT();
-        console.log("NFT address: %s", address(nft));
+
         registry = new ERC6551Registry();
         implementation = new ERC6551Account();
         factory = new RedPacketFactory(address(nft), address(registry));
@@ -49,59 +50,85 @@ contract RedPacketTest is Test {
         mockERC20.approve(address(redPacket), amount);
 
         // Create red packet
-        address wallet =redPacket.createRedPacket(recipient, address(mockERC20), amount);
+        address wallet = redPacket.createRedPacket(recipient, address(mockERC20), amount);
 
         //check wallet address balance
-
-
         uint256 balance = IERC20(address(mockERC20)).balanceOf(wallet);
 
         //check wallet from registry
-        bytes32 salt = keccak256(abi.encodePacked(address(nft), uint(0)));
+        // bytes32 salt = keccak256(abi.encodePacked(address(nft), uint256(0)));
+        bytes32 salt = bytes32(uint256(0 + 100000));
 
         uint256 chainId = block.chainid;
         address walletaddress = registry.account(address(implementation), salt, chainId, address(nft), 0);
 
-        console.log("origin---1-1-1-1-1-1--1-", walletaddress);
-        console.log("=====================", wallet);
-        console.log("Balance: %s", balance);
         address _redPacketNft = factory.getAccount(uint256(0));
 
         uint256 balance2 = IERC20(address(mockERC20)).balanceOf(_redPacketNft);
-        
-
-        console.log("xxxxxxxxxxddwdwddwxxxxxxxxxxx", _redPacketNft);
-        console.log("=============Balance: %s", balance2);
-
+        assertEq(walletaddress, _redPacketNft);
+        assertEq(wallet, _redPacketNft);
         // check recepient balance
-        
+        assertEq(balance, balance2);
     }
 
     function testOpenRedPacket() public {
+        testCreateRedPacket();
 
-        address _redPacketNft = factory.getAccount( 0);
+        address account = factory.getAccount(0);
 
-        console.log("RedPacketNFT address: %s", _redPacketNft);
+        IERC6551Account accountInstance = IERC6551Account(payable(account));
+        IERC6551Executable executableAccountInstance = IERC6551Executable(account);
 
-        // Get the token details
-        // (uint256 chainId, address tokenContract, uint256 tokenId) = IERC6551Account(_redPacketNft).token();
+        // Get the balance of ERC20 tokens in the account
+        uint256 erc20Balance = IERC20(mockERC20).balanceOf(account);
+        assertEq(erc20Balance, 1000 * 10 ** 18);
+        require(erc20Balance > 0, "No ERC20 tokens to withdraw");
 
-        // // Ensure the caller is the owner of the NFT
-        // require(IERC721(tokenContract).ownerOf(tokenId) == msg.sender, "Not the owner of the NFT");
+        // Prepare the call data for the ERC20 transfer
+        bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, recipient, erc20Balance);
 
-        // // Get the balance of ERC20 tokens in the account
-        // uint256 erc20Balance = IERC20(_erc20).balanceOf(_redPacketNft);
+        // Call the execute function on the ERC6551Account to transfer ERC20 tokens
+        vm.prank(recipient);
+        executableAccountInstance.execute(address(mockERC20), 0, data, 0);
+        assertEq(accountInstance.state(), 1);
+        uint256 recipientErc20Balance = IERC20(mockERC20).balanceOf(recipient);
+        assertEq(recipientErc20Balance, 1000 * 10 ** 18);
+    }
 
-        // require(erc20Balance > 0, "No ERC20 tokens to withdraw");
+    function testDeploy() public {
+        uint256 chainId = 100;
+        address tokenAddress = address(200);
+        uint256 tokenId = 300;
+        bytes32 salt = bytes32(uint256(400));
 
-        // // Prepare the call data for the ERC20 transfer
-        // bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, msg.sender, erc20Balance);
+        address deployedAccount = registry.createAccount(address(implementation), salt, chainId, tokenAddress, tokenId);
 
-        // // Call the execute function on the ERC6551Account to transfer ERC20 tokens
-        // IERC6551Executable(_redPacketNft).execute(_erc20, 0, data, 0);
+        address registryComputedAddress =
+            registry.account(address(implementation), salt, chainId, tokenAddress, tokenId);
+        console.log(deployedAccount, "deployedAccount");
+        console.log(registryComputedAddress);
+        assertEq(deployedAccount, registryComputedAddress);
+    }
 
-        // // Emit an event
-        // emit RedPacketOpened(_redPacketNft, msg.sender, erc20Balance);
+    function testCall() public {
+        nft.mint(vm.addr(1));
+
+        address account = registry.createAccount(address(implementation), 0, block.chainid, address(nft), 0);
+        assertTrue(account != address(0));
+
+        IERC6551Account accountInstance = IERC6551Account(payable(account));
+        IERC6551Executable executableAccountInstance = IERC6551Executable(account);
+
+        assertEq(accountInstance.isValidSigner(vm.addr(1), ""), IERC6551Account.isValidSigner.selector);
+
+        vm.deal(account, 1 ether);
+
+        vm.prank(vm.addr(1));
+        executableAccountInstance.execute(payable(vm.addr(2)), 0.5 ether, "", 0);
+
+        assertEq(account.balance, 0.5 ether);
+        assertEq(vm.addr(2).balance, 0.5 ether);
+        assertEq(accountInstance.state(), 1);
     }
 }
 
