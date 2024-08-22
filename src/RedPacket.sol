@@ -36,6 +36,7 @@ contract RedPacket is IRedPacket {
     /// @notice Opens a red packet NFT
     /// @param _redPacketNft The address of the red packet NFT to open
     function open(address _redPacketNft, uint256 tokenId) external {
+        //   token.approve(msg.sender, amount);
         IRedPacketNFT(_redPacketNft).openRedPacket(tokenId, msg.sender);
         emit RedPacketOpened(_redPacketNft);
     }

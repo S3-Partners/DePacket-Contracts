@@ -46,6 +46,7 @@ contract RedPacketTest is Test {
         token.mint(owner.addr, amount);
         factory.setTokenAddress(address(nft));
         token.approve(address(redpacket), amount);
+        assertEq(token.allowance(owner.addr, address(redpacket)), amount);
         vm.stopPrank();
     }
 
@@ -67,25 +68,21 @@ contract RedPacketTest is Test {
         address redPacketNft = factory.deployedTokens(0);
 
         RedPacketNFT(redPacketNft).setApprovalForAll(address(redpacket), true);
-
-        token.approve(address(redpacket), amount);
-        token.approve(address(redPacketNft), amount);
-        token.approve(alice.addr, amount);
         vm.stopPrank();
 
+        vm.prank(address(redPacketNft));
+        token.approve(address(redPacketNft), amount);
+
         vm.startPrank(alice.addr);
+
+        assertEq(token.allowance(address(redPacketNft), address(redPacketNft)), amount);
         assertEq(RedPacketNFT(redPacketNft).ownerOf(0), owner.addr);
         assertEq(token.balanceOf(redPacketNft), amount);
         assertEq(token.balanceOf(owner.addr), 0);
         assertEq(token.balanceOf(alice.addr), 0);
         redpacket.open(redPacketNft, 0);
-        // 调用代理合约中的 openRedPacket 方法
-        // 使用明确的函数选择器进行调用，避免重载问题
-        // (bool success,) =
-        //     address(proxy).call(abi.encodeWithSelector(bytes4(keccak256("openRedPacket(uint256)")), tokenId));
-        // assertTrue(success, "Open red packet failed");
-        // assertEq(token.balanceOf(redPacketNft), 0);
-        // assertEq(token.balanceOf(alice.addr), amount);
+        assertEq(token.balanceOf(alice.addr), amount);
+        assertEq(RedPacketNFT(redPacketNft).ownerOf(0), alice.addr);
         vm.stopPrank();
     }
 }

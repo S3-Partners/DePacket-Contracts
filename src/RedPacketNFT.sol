@@ -45,7 +45,6 @@ contract RedPacketNFT is
         __ERC721Burnable_init();
         __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
-        console.log("create initialize");
     }
 
     function openRedPacket(uint256 tokenId, address recipient) public payable {
@@ -53,9 +52,9 @@ contract RedPacketNFT is
     }
 
     // Open the red packet, transfers the token to the caller
-    function openRedPacket(uint256 tokenId, address recipient, bytes calldata signature) external payable {
-        _openRedPacket(tokenId, recipient, address(0));
-    }
+    // function openRedPacket(uint256 tokenId, address recipient, bytes calldata signature) external payable {
+    //     _openRedPacket(tokenId, recipient, address(0));
+    // }
 
     function _openRedPacket(uint256 tokenId, address recipient, address feeReceiver) private {
         RedPacketInfo storage packet = _redPackets[tokenId];
@@ -90,6 +89,7 @@ contract RedPacketNFT is
             (bool success,) = to.call{value: amount}("");
             require(success, "RPK: transfer fee failed");
         } else {
+            console.log("RPK: transfer msg.sender", msg.sender);
             SafeERC20.safeTransferFrom(IERC20(token), address(this), to, amount);
         }
     }

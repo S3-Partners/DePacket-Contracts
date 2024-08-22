@@ -34,7 +34,6 @@ contract RedPacketFactory is Ownable {
         RedPacketNFT(nftContract).createRedPacket(to, _uri, _erc20, _amount, _recipient);
         deployedTokens.push(nftContract);
         tokenDeployUser[nftContract] = to;
-        console.log("create RedPacket");
 
         emit RedPacketDeployed(nftContract, to, _recipient);
     }
