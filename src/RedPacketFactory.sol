@@ -36,20 +36,18 @@ contract RedPacketFactory is IERC721Receiver {
     }
 
     function getAccount(uint256 _tokenId) external view returns (address) {
-        // bytes32 salt = keccak256(abi.encodePacked(address(nftContract), uint256(_tokenId)));
         bytes32 salt = bytes32(uint256(_tokenId + 100000));
         address account = registry.account(address(implementation), salt, chainId, nftContract, _tokenId);
         return account;
     }
 
-    function createRedPacket(address recipient) external returns (address) {
+    function createRedPacket(address recipient, string memory uri) external returns (address) {
         require(recipient != address(0), "Invalid recipient address");
 
         // mint nft token
-        uint256 tokenId = IRedPacketNFT(nftContract).mint(address(this));
+        uint256 tokenId = IRedPacketNFT(nftContract).mint(address(this), uri);
         require(tokenId == 0, "Minting failed");
 
-        // bytes32 salt = keccak256(abi.encodePacked(nftContract, tokenId));
         bytes32 salt = bytes32(uint256(tokenId + 100000));
 
         // create account

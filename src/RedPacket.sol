@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract RedPacket is IRedPacket {
     IRedPacketFactory public factory;
+    string public uri = "QmQv8bBST1D89j6q14L7wUzBeYgsovJ8ywvsCUhghLH5Qd";
 
     address public registerAddress;
 
@@ -27,7 +28,7 @@ contract RedPacket is IRedPacket {
         external
         returns (address walletContract)
     {
-        walletContract = factory.createRedPacket(recipient);
+        walletContract = factory.createRedPacket(recipient, uri);
         _transferUsdtIntoRedPacket(walletContract, _erc20, amount);
         emit RedPacketCreated(walletContract, recipient, _erc20, amount);
     }

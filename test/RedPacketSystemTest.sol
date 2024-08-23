@@ -19,6 +19,7 @@ contract RedPacketTest is Test {
     MockERC20 public mockERC20;
     address public owner;
     address public recipient;
+    string public uri = "QmQv8bBST1D89j6q14L7wUzBeYgsovJ8ywvsCUhghLH5Qd";
 
     event ERC6551AccountCreated(
         address account,
@@ -65,7 +66,6 @@ contract RedPacketTest is Test {
         uint256 balance = IERC20(address(mockERC20)).balanceOf(wallet);
 
         //check wallet from registry
-        // bytes32 salt = keccak256(abi.encodePacked(address(nft), uint256(0)));
         bytes32 salt = bytes32(uint256(0 + 100000));
 
         uint256 chainId = block.chainid;
@@ -76,7 +76,7 @@ contract RedPacketTest is Test {
         uint256 balance2 = IERC20(address(mockERC20)).balanceOf(_redPacketNft);
         assertEq(walletaddress, _redPacketNft);
         assertEq(wallet, _redPacketNft);
-        // check recepient balance
+        // check recipient balance
         assertEq(balance, balance2);
     }
 
@@ -144,6 +144,7 @@ contract RedPacketTest is Test {
         uint256 tokenId,
         bytes32 salt
     ) public {
+        vm.assume(salt < bytes32(uint256(type(uint160).max)));
         address account = registry.account(_implementation, salt, chainId, tokenAddress, tokenId);
 
         address deployedAccount = registry.createAccount(_implementation, salt, chainId, tokenAddress, tokenId);
@@ -152,7 +153,7 @@ contract RedPacketTest is Test {
     }
 
     function testCall() public {
-        nft.mint(vm.addr(1));
+        nft.mint(vm.addr(1), uri);
 
         address account = registry.createAccount(address(implementation), 0, block.chainid, address(nft), 0);
         assertTrue(account != address(0));
