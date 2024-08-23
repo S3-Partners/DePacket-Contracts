@@ -1,42 +1,62 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "./interface/IRedPacketFactory.sol";
+import "./ERC6551Registry.sol";
+import {Test, console} from "forge-std/Test.sol";
+import "forge-std/console.sol";
+
+import "./ERC6551Account.sol";
 import "./interface/IRedPacketNFT.sol";
-import "./RedPacketNFT.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-import "@openzeppelin/contracts/proxy/Clones.sol";
+contract RedPacketFactory {
+    ERC6551Registry public registry;
 
-contract RedPacketFactory is Ownable {
-    RedPacketNFT nft;
-    address[] public deployedTokens;
+    address public owner;
 
-    event deployInscriptionEvent(address indexed tokenAddress, address indexed userAddress);
+    address public implementation;
 
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    address public nftContract;
 
-    function setTokenAddress(address _tokenAddress) public onlyOwner {
-        nft = RedPacketNFT(_tokenAddress);
+    uint256 chainId = block.chainid;
+
+    error RedPacketFactory__NotOwner();
+
+    constructor(address _nft_contract, address _registry) {
+        owner = msg.sender;
+        nftContract = _nft_contract;
+        registry = ERC6551Registry(_registry);
     }
 
-    function createRedPacket(address recipient) external returns (address nftContract) {
-        // nftContract = address(new RedPacketNFT(recipient));
-        nftContract = Clones.clone(address(nft));
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert RedPacketFactory__NotOwner();
+        _;
+    }
 
-        RedPacketNFT(nftContract).initialize(recipient);
+    function setImplementation(address _implementation) external onlyOwner {
+        implementation = _implementation;
+    }
 
-        deployedTokens.push(nftContract);
+    function getAccount(uint256 _tokenId) external view returns (address) {
+        // bytes32 salt = keccak256(abi.encodePacked(address(nftContract), uint256(_tokenId)));
+        bytes32 salt = bytes32(uint256(_tokenId + 100000));
+        address account = registry.account(address(implementation), salt, chainId, nftContract, _tokenId);
+        return account;
+    }
 
-        emit deployInscriptionEvent(nftContract, recipient);
+    function createRedPacket(address recipient) external returns (address) {
+        // mint nft token
+        uint256 tokenId = IRedPacketNFT(nftContract).mint(address(this));
 
-        // create2 is used to deploy a contract with a specific address
+        // bytes32 salt = keccak256(abi.encodePacked(nftContract, tokenId));
+        bytes32 salt = bytes32(uint256(tokenId + 100000));
 
-        // bytes memory bytecode = type(RedPacketNFT).creationCode;
-        // bytes32 salt = keccak256(abi.encodePacked(erc20Address, amount, recipient));
+        // create account
+        address redPacketAddress = registry.createAccount(implementation, salt, chainId, nftContract, tokenId);
 
-        // assembly {
-        //     nftContract := create2(0, add(bytecode, 32), mload(bytecode), salt)
-        // }
+        // transfer to recipient
+        IRedPacketNFT(nftContract).transfer(address(this), recipient, tokenId);
+
+        return redPacketAddress;
     }
 }
