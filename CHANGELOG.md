@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file. See [conven
 
 - RedPacketNFT init (#5) - ([7f61329](https://github.com/S3-Partners/depacket-contracts/commit/7f61329d10bfa7ec7f5054a73d3257f9e0bd82f0)) - Qiao Pengjun 乔鹏军
 - deploy script create and nft contract update - ([cb2759b](https://github.com/S3-Partners/depacket-contracts/commit/cb2759b72b6f8c98f17f8c72c1db72c51cb1db76)) - QiaoPengjun5162
+- add cliff format contract file - ([4fcd9c5](https://github.com/S3-Partners/depacket-contracts/commit/4fcd9c5375b52f78084c3350aa332a40be315766)) - QiaoPengjun5162
+- update nft contract add cicd fix salt test - ([28397b8](https://github.com/S3-Partners/depacket-contracts/commit/28397b8b8fd8d7f690d3a1579e7eac7228c13ba1)) - QiaoPengjun5162
 
 ### Miscellaneous Chores
 
