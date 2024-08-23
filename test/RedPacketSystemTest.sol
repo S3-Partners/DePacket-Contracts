@@ -20,6 +20,15 @@ contract RedPacketTest is Test {
     address public owner;
     address public recipient;
 
+    event ERC6551AccountCreated(
+        address account,
+        address indexed implementation,
+        bytes32 salt,
+        uint256 chainId,
+        address indexed tokenContract,
+        uint256 indexed tokenId
+    );
+
     function setUp() public {
         owner = address(this);
         recipient = address(0x123);
@@ -108,6 +117,24 @@ contract RedPacketTest is Test {
         console.log(deployedAccount, "deployedAccount");
         console.log(registryComputedAddress);
         assertEq(deployedAccount, registryComputedAddress);
+    }
+
+    function testDeploy2() public {
+        uint256 chainId = 100;
+        address tokenAddress = address(200);
+        uint256 tokenId = 300;
+        bytes32 salt = bytes32(uint256(400));
+
+        address account = registry.account(address(implementation), salt, chainId, tokenAddress, tokenId);
+
+        vm.expectEmit(true, true, true, true);
+        emit ERC6551AccountCreated(account, address(implementation), salt, chainId, tokenAddress, tokenId);
+
+        address deployedAccount = registry.createAccount(address(implementation), salt, chainId, tokenAddress, tokenId);
+        assertEq(deployedAccount, account);
+
+        deployedAccount = registry.createAccount(address(implementation), salt, chainId, tokenAddress, tokenId);
+        assertEq(deployedAccount, account);
     }
 
     function testCall() public {
