@@ -9,6 +9,7 @@ import "../src/ERC6551Registry.sol";
 import "../src/ERC6551Account.sol";
 import "../src/interface/IERC6551Account.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract RedPacketTest is Test {
     RedPacket public redPacket;
@@ -17,6 +18,7 @@ contract RedPacketTest is Test {
     ERC6551Registry public registry;
     ERC6551Account public implementation;
     MockERC20 public mockERC20;
+    ERC1967Proxy proxy;
     address public owner;
     address public recipient;
     string public uri = "QmQv8bBST1D89j6q14L7wUzBeYgsovJ8ywvsCUhghLH5Qd";
@@ -42,7 +44,17 @@ contract RedPacketTest is Test {
         factory = new RedPacketFactory(address(nft), address(registry));
         factory.setImplementation(address(implementation));
 
-        redPacket = new RedPacket(address(factory));
+        // redPacket = new RedPacket();
+        // redPacket.initialize(address(owner), address(factory));
+        // 部署实现
+        RedPacket implementation_red_packet = new RedPacket();
+        // Deploy the proxy and initialize the contract through the proxy
+        proxy = new ERC1967Proxy(
+            address(implementation_red_packet),
+            abi.encodeCall(implementation_red_packet.initialize, (address(owner), address(factory)))
+        );
+        // 用代理关联 RedPacket 接口
+        redPacket = RedPacket(address(proxy));
 
         // Deploy mock ERC20 token
         mockERC20 = new MockERC20();
@@ -60,7 +72,7 @@ contract RedPacketTest is Test {
         mockERC20.approve(address(redPacket), amount);
 
         // Create red packet
-        address wallet = redPacket.createRedPacket(recipient, address(mockERC20), amount);
+        address wallet = redPacket.createRedPacket(recipient, address(mockERC20), amount, uri);
 
         //check wallet address balance
         uint256 balance = IERC20(address(mockERC20)).balanceOf(wallet);

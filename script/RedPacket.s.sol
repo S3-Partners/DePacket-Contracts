@@ -14,11 +14,13 @@ contract RedPacketScript is Script {
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        address deployerAddress = vm.addr(deployerPrivateKey);
 
+        console.log("Deploying contracts with the account:", deployerAddress);
         vm.startBroadcast(deployerPrivateKey);
 
-        redpacket = new RedPacket(factory);
-
+        redpacket = new RedPacket();
+        redpacket.initialize(deployerAddress, factory);
         console.log("RedPacket deployed to:", address(redpacket));
 
         vm.stopBroadcast();
