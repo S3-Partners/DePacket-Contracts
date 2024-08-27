@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 interface IRedPacketNFT {
     function mint(address, string memory uri) external returns (uint256);

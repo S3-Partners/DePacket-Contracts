@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity ^0.8.20;
 
 import "./interface/IRedPacketFactory.sol";
 import "./interface/IRedPacketNFT.sol";

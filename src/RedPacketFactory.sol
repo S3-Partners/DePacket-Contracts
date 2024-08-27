@@ -36,7 +36,7 @@ contract RedPacketFactory is IERC721Receiver {
     }
 
     function getAccount(uint256 _tokenId) external view returns (address) {
-        bytes32 salt = bytes32(uint256(_tokenId + 100000));
+        bytes32 salt = generateHash(_tokenId, nftContract);
         address account = registry.account(address(implementation), salt, chainId, nftContract, _tokenId);
         return account;
     }
@@ -46,10 +46,8 @@ contract RedPacketFactory is IERC721Receiver {
 
         // mint nft token
         uint256 tokenId = IRedPacketNFT(nftContract).mint(address(this), uri);
-        require(tokenId == 0, "Minting failed");
 
-        bytes32 salt = bytes32(uint256(tokenId + 100000));
-
+        bytes32 salt = generateHash(tokenId, nftContract);
         // create account
         address redPacketAddress = registry.createAccount(implementation, salt, chainId, nftContract, tokenId);
 
@@ -59,6 +57,20 @@ contract RedPacketFactory is IERC721Receiver {
         emit RedPacketCreated(redPacketAddress, recipient, tokenId);
 
         return redPacketAddress;
+    }
+
+    function generateHash(uint256 tokenId, address contractAddress) public pure returns (bytes32) {
+        bytes32 fullHash = keccak256(abi.encodePacked(tokenId, contractAddress));
+
+        bytes20 truncatedHash = bytes20(fullHash);
+
+        bytes32 finalHash = bytes32(uint256(uint160(truncatedHash)));
+
+        bytes32 maxBytes32 = bytes32(uint256(type(uint160).max));
+
+        require(finalHash <= maxBytes32, "Generated hash is greater than or equal to maxBytes32");
+
+        return finalHash;
     }
 
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)

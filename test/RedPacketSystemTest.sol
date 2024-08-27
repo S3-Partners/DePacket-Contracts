@@ -62,6 +62,7 @@ contract RedPacketTest is Test {
 
     function testCreateRedPacket() public {
         uint256 amount = 1000 ether;
+        uint256 tokenId = 0;
 
         assertEq(nft.balanceOf(recipient), 0);
 
@@ -78,7 +79,7 @@ contract RedPacketTest is Test {
         uint256 balance = IERC20(address(mockERC20)).balanceOf(wallet);
 
         //check wallet from registry
-        bytes32 salt = bytes32(uint256(0 + 100000));
+        bytes32 salt = factory.generateHash(tokenId, address(nft));
 
         uint256 chainId = block.chainid;
         address walletaddress = registry.account(address(implementation), salt, chainId, address(nft), 0);
