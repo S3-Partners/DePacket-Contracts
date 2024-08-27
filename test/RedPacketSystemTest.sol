@@ -9,6 +9,7 @@ import "../src/ERC6551Registry.sol";
 import "../src/ERC6551Account.sol";
 import "../src/interface/IERC6551Account.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract RedPacketTest is Test {
     RedPacket public redPacket;
@@ -17,8 +18,19 @@ contract RedPacketTest is Test {
     ERC6551Registry public registry;
     ERC6551Account public implementation;
     MockERC20 public mockERC20;
+    ERC1967Proxy proxy;
     address public owner;
     address public recipient;
+    string public uri = "QmQv8bBST1D89j6q14L7wUzBeYgsovJ8ywvsCUhghLH5Qd";
+
+    event ERC6551AccountCreated(
+        address account,
+        address indexed implementation,
+        bytes32 salt,
+        uint256 chainId,
+        address indexed tokenContract,
+        uint256 indexed tokenId
+    );
 
     function setUp() public {
         owner = address(this);
@@ -32,7 +44,17 @@ contract RedPacketTest is Test {
         factory = new RedPacketFactory(address(nft), address(registry));
         factory.setImplementation(address(implementation));
 
-        redPacket = new RedPacket(address(factory));
+        // redPacket = new RedPacket();
+        // redPacket.initialize(address(owner), address(factory));
+        // 部署实现
+        RedPacket implementation_red_packet = new RedPacket();
+        // Deploy the proxy and initialize the contract through the proxy
+        proxy = new ERC1967Proxy(
+            address(implementation_red_packet),
+            abi.encodeCall(implementation_red_packet.initialize, (address(owner), address(factory)))
+        );
+        // 用代理关联 RedPacket 接口
+        redPacket = RedPacket(address(proxy));
 
         // Deploy mock ERC20 token
         mockERC20 = new MockERC20();
@@ -40,6 +62,7 @@ contract RedPacketTest is Test {
 
     function testCreateRedPacket() public {
         uint256 amount = 1000 ether;
+        uint256 tokenId = 0;
 
         assertEq(nft.balanceOf(recipient), 0);
 
@@ -50,14 +73,13 @@ contract RedPacketTest is Test {
         mockERC20.approve(address(redPacket), amount);
 
         // Create red packet
-        address wallet = redPacket.createRedPacket(recipient, address(mockERC20), amount);
+        address wallet = redPacket.createRedPacket(recipient, address(mockERC20), amount, uri);
 
         //check wallet address balance
         uint256 balance = IERC20(address(mockERC20)).balanceOf(wallet);
 
         //check wallet from registry
-        // bytes32 salt = keccak256(abi.encodePacked(address(nft), uint256(0)));
-        bytes32 salt = bytes32(uint256(0 + 100000));
+        bytes32 salt = factory.generateHash(tokenId, address(nft));
 
         uint256 chainId = block.chainid;
         address walletaddress = registry.account(address(implementation), salt, chainId, address(nft), 0);
@@ -67,7 +89,7 @@ contract RedPacketTest is Test {
         uint256 balance2 = IERC20(address(mockERC20)).balanceOf(_redPacketNft);
         assertEq(walletaddress, _redPacketNft);
         assertEq(wallet, _redPacketNft);
-        // check recepient balance
+        // check recipient balance
         assertEq(balance, balance2);
     }
 
@@ -110,8 +132,41 @@ contract RedPacketTest is Test {
         assertEq(deployedAccount, registryComputedAddress);
     }
 
+    function testDeploy2() public {
+        uint256 chainId = 100;
+        address tokenAddress = address(200);
+        uint256 tokenId = 300;
+        bytes32 salt = bytes32(uint256(400));
+
+        address account = registry.account(address(implementation), salt, chainId, tokenAddress, tokenId);
+
+        vm.expectEmit(true, true, true, true);
+        emit ERC6551AccountCreated(account, address(implementation), salt, chainId, tokenAddress, tokenId);
+
+        address deployedAccount = registry.createAccount(address(implementation), salt, chainId, tokenAddress, tokenId);
+        assertEq(deployedAccount, account);
+
+        deployedAccount = registry.createAccount(address(implementation), salt, chainId, tokenAddress, tokenId);
+        assertEq(deployedAccount, account);
+    }
+
+    function testDeployFuzz(
+        address _implementation,
+        uint256 chainId,
+        address tokenAddress,
+        uint256 tokenId,
+        bytes32 salt
+    ) public {
+        vm.assume(salt <= bytes32(uint256(type(uint160).max)));
+        address account = registry.account(_implementation, salt, chainId, tokenAddress, tokenId);
+
+        address deployedAccount = registry.createAccount(_implementation, salt, chainId, tokenAddress, tokenId);
+
+        assertEq(deployedAccount, account);
+    }
+
     function testCall() public {
-        nft.mint(vm.addr(1));
+        nft.mint(vm.addr(1), uri);
 
         address account = registry.createAccount(address(implementation), 0, block.chainid, address(nft), 0);
         assertTrue(account != address(0));

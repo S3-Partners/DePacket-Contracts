@@ -2,14 +2,12 @@
 pragma solidity ^0.8.20;
 
 import "./ERC6551Registry.sol";
-import {Test, console} from "forge-std/Test.sol";
-import "forge-std/console.sol";
-
 import "./ERC6551Account.sol";
 import "./interface/IRedPacketNFT.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-contract RedPacketFactory {
+contract RedPacketFactory is IERC721Receiver {
     ERC6551Registry public registry;
 
     address public owner;
@@ -38,25 +36,53 @@ contract RedPacketFactory {
     }
 
     function getAccount(uint256 _tokenId) external view returns (address) {
-        // bytes32 salt = keccak256(abi.encodePacked(address(nftContract), uint256(_tokenId)));
-        bytes32 salt = bytes32(uint256(_tokenId + 100000));
+        bytes32 salt = generateHash(_tokenId, nftContract);
         address account = registry.account(address(implementation), salt, chainId, nftContract, _tokenId);
         return account;
     }
 
-    function createRedPacket(address recipient) external returns (address) {
+    function createRedPacket(address recipient, string memory uri) external returns (address) {
+        require(recipient != address(0), "Invalid recipient address");
+
         // mint nft token
-        uint256 tokenId = IRedPacketNFT(nftContract).mint(address(this));
+        uint256 tokenId = IRedPacketNFT(nftContract).mint(address(this), uri);
 
-        // bytes32 salt = keccak256(abi.encodePacked(nftContract, tokenId));
-        bytes32 salt = bytes32(uint256(tokenId + 100000));
-
+        bytes32 salt = generateHash(tokenId, nftContract);
         // create account
         address redPacketAddress = registry.createAccount(implementation, salt, chainId, nftContract, tokenId);
 
         // transfer to recipient
         IRedPacketNFT(nftContract).transfer(address(this), recipient, tokenId);
+        // Log the creation of the Red Packet
+        emit RedPacketCreated(redPacketAddress, recipient, tokenId);
 
         return redPacketAddress;
     }
+
+    function generateHash(uint256 tokenId, address contractAddress) public pure returns (bytes32) {
+        bytes32 fullHash = keccak256(abi.encodePacked(tokenId, contractAddress));
+
+        bytes20 truncatedHash = bytes20(fullHash);
+
+        bytes32 finalHash = bytes32(uint256(uint160(truncatedHash)));
+
+        bytes32 maxBytes32 = bytes32(uint256(type(uint160).max));
+
+        require(finalHash <= maxBytes32, "Generated hash is greater than or equal to maxBytes32");
+
+        return finalHash;
+    }
+
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
+        external
+        returns (bytes4)
+    {
+        // 记录接收到的代币信息
+        emit TokenReceived(operator, from, tokenId, data);
+        return this.onERC721Received.selector;
+    }
+
+    // Event declaration
+    event RedPacketCreated(address indexed redPacketAddress, address indexed recipient, uint256 tokenId);
+    event TokenReceived(address operator, address from, uint256 tokenId, bytes data);
 }
