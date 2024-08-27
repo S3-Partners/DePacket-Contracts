@@ -156,7 +156,7 @@ contract RedPacketTest is Test {
         uint256 tokenId,
         bytes32 salt
     ) public {
-        vm.assume(salt < bytes32(uint256(type(uint160).max)));
+        vm.assume(salt <= bytes32(uint256(type(uint160).max)));
         address account = registry.account(_implementation, salt, chainId, tokenAddress, tokenId);
 
         address deployedAccount = registry.createAccount(_implementation, salt, chainId, tokenAddress, tokenId);
