@@ -12,8 +12,8 @@ contract RedPacketFactoryScript is Script {
     address public registry;
 
     function setUp() public {
-        nftContract = 0xc32cE2198B123D1c1F7FD3A9f54Bff9f975819Fa;
-        registry = 0x7eA36391c7127A7f40E5c23212A8016d6E494546;
+        nftContract = 0xD841a44e21c5F0944d1b022C6172865288F3C077;
+        registry = 0x724401E256D94eA9c8567cCbE23eC977B20AE37b;
     }
 
     function run() public {
