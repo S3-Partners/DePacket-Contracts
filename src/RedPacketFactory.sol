@@ -45,14 +45,12 @@ contract RedPacketFactory is IERC721Receiver {
         require(recipient != address(0), "Invalid recipient address");
 
         // mint nft token
-        uint256 tokenId = IRedPacketNFT(nftContract).mint(address(this), uri);
+        uint256 tokenId = IRedPacketNFT(nftContract).mint(recipient, uri);
 
         bytes32 salt = generateHash(tokenId, nftContract);
         // create account
         address redPacketAddress = registry.createAccount(implementation, salt, chainId, nftContract, tokenId);
 
-        // transfer to recipient
-        IRedPacketNFT(nftContract).transfer(address(this), recipient, tokenId);
         // Log the creation of the Red Packet
         emit RedPacketCreated(redPacketAddress, recipient, tokenId);
 
@@ -73,6 +71,13 @@ contract RedPacketFactory is IERC721Receiver {
         return finalHash;
     }
 
+    function setNFTContract(address contractAddress) public onlyOwner {
+        require(contractAddress != address(0), "Invalid address: zero address");
+        address oldAddress = nftContract;
+        nftContract = contractAddress;
+        emit NFTContractUpdated(oldAddress, contractAddress);
+    }
+
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
         external
         returns (bytes4)
@@ -85,4 +90,5 @@ contract RedPacketFactory is IERC721Receiver {
     // Event declaration
     event RedPacketCreated(address indexed redPacketAddress, address indexed recipient, uint256 tokenId);
     event TokenReceived(address operator, address from, uint256 tokenId, bytes data);
+    event NFTContractUpdated(address indexed oldAddress, address indexed newAddress);
 }

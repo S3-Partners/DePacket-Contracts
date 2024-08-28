@@ -8,28 +8,19 @@ import "./interface/IERC6551Account.sol";
 import "./interface/IERC6551Registry.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract RedPacket is IRedPacket, Initializable, UUPSUpgradeable, OwnableUpgradeable {
+contract RedPacket is IRedPacket {
     IRedPacketFactory public factory;
-    address public registerAddress;
 
     error RedPacket_Transfer_Failed();
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
+    ///////////////////
+    // Constructor
+    ///////////////////
 
-    function initialize(address _initialOwner, address _factory) public initializer {
-        __Ownable_init(_initialOwner);
-        __UUPSUpgradeable_init();
-        factory = IRedPacketFactory(_factory);
+    constructor(address _redPacketFactory) {
+        factory = IRedPacketFactory(_redPacketFactory);
     }
-
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function createRedPacket(address _recipient, address _erc20, uint256 _amount, string memory _uri)
         external

@@ -44,17 +44,17 @@ contract RedPacketTest is Test {
         factory = new RedPacketFactory(address(nft), address(registry));
         factory.setImplementation(address(implementation));
 
-        // redPacket = new RedPacket();
+        redPacket = new RedPacket(address(factory));
         // redPacket.initialize(address(owner), address(factory));
         // 部署实现
-        RedPacket implementation_red_packet = new RedPacket();
-        // Deploy the proxy and initialize the contract through the proxy
-        proxy = new ERC1967Proxy(
-            address(implementation_red_packet),
-            abi.encodeCall(implementation_red_packet.initialize, (address(owner), address(factory)))
-        );
-        // 用代理关联 RedPacket 接口
-        redPacket = RedPacket(address(proxy));
+        // RedPacket implementation_red_packet = new RedPacket();
+        // // Deploy the proxy and initialize the contract through the proxy
+        // proxy = new ERC1967Proxy(
+        //     address(implementation_red_packet),
+        //     abi.encodeCall(implementation_red_packet.initialize, (address(owner), address(factory)))
+        // );
+        // // 用代理关联 RedPacket 接口
+        // redPacket = RedPacket(address(proxy));
 
         // Deploy mock ERC20 token
         mockERC20 = new MockERC20();
@@ -115,6 +115,8 @@ contract RedPacketTest is Test {
         assertEq(accountInstance.state(), 1);
         uint256 recipientErc20Balance = IERC20(mockERC20).balanceOf(recipient);
         assertEq(recipientErc20Balance, 1000 * 10 ** 18);
+        uint256 openAfterERC20Balance = IERC20(mockERC20).balanceOf(account);
+        assertEq(openAfterERC20Balance, 0 * 10 ** 18);
     }
 
     function testDeploy() public {

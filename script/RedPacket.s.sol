@@ -24,19 +24,20 @@ contract RedPacketScript is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy the RedPacket contract
-        RedPacket redpacket = new RedPacket();
+        RedPacket redpacket = new RedPacket(factory);
+        // RedPacket redpacket = new RedPacket();
         console.log("RedPacket deployed to:", address(redpacket));
 
         // Encode the initializer function call
-        bytes memory data = abi.encodeCall(redpacket.initialize, (deployerAddress, factory));
+        // bytes memory data = abi.encodeCall(redpacket.initialize, (deployerAddress, factory));
 
         // Deploy the proxy contract with the implementation address and initializer data
-        ERC1967Proxy proxy = new ERC1967Proxy(address(redpacket), data);
+        // ERC1967Proxy proxy = new ERC1967Proxy(address(redpacket), data);
 
         // Stop broadcasting transactions
         vm.stopBroadcast();
 
         // Log the proxy contract address
-        console.log("RedPacket UUPS Proxy Address:", address(proxy));
+        // console.log("RedPacket UUPS Proxy Address:", address(proxy));
     }
 }
