@@ -24,11 +24,7 @@ interface IRedPacket {
     /// @param _erc20 The address of the ERC20 token to be used
     /// @param _amount The amount of ERC20 tokens to be transferred
     /// @return walletContract The address of the newly created red packet wallet
-    function createRedPacket(
-        address _recipient,
-        address _erc20,
-        uint256 _amount
-    ) external returns (address walletContract);
-
-
+    function createRedPacket(address _recipient, address _erc20, uint256 _amount)
+        external
+        returns (address walletContract);
 }

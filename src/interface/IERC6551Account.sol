@@ -12,4 +12,6 @@ interface IERC6551Account {
         external
         payable
         returns (bytes memory);
+
+    event OpenRedPacket(address indexed recipient, address indexed erc20, uint256 amount, uint256 value);
 }

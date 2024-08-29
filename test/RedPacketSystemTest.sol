@@ -32,6 +32,8 @@ contract RedPacketTest is Test {
         uint256 indexed tokenId
     );
 
+    event TokenReceived(address indexed operator, address indexed from, uint256 indexed tokenId, bytes data);
+
     function setUp() public {
         owner = address(this);
         recipient = address(0x123);
@@ -42,20 +44,13 @@ contract RedPacketTest is Test {
         registry = new ERC6551Registry();
         implementation = new ERC6551Account();
         factory = new RedPacketFactory(address(nft), address(registry), address(implementation));
-        
 
-        // redPacket = new RedPacket();
-        // redPacket.initialize(address(owner), address(factory));
-        // 部署实现
-        RedPacket implementation_red_packet = new RedPacket(address(factory));
-        // Deploy the proxy and initialize the contract through the proxy
-     
+        redPacket = new RedPacket(address(factory));
 
         // Deploy mock ERC20 token
         mockERC20 = new MockERC20();
     }
 
-    
     function testNFTmintGas() public {
         uint256 startGas = gasleft();
         // Your contract operation here
@@ -63,8 +58,6 @@ contract RedPacketTest is Test {
         uint256 gasUsed = startGas - gasleft();
         console.log("NFT MINT Gas used:", gasUsed);
     }
-
-
 
     function testCreateRedPacket() public {
         uint256 amount = 1000 ether;
@@ -90,8 +83,7 @@ contract RedPacketTest is Test {
         uint256 balance = IERC20(address(mockERC20)).balanceOf(wallet);
 
         //check wallet from registry
-        // bytes32 salt = factory.generateHash(tokenId, address(nft));
-        bytes32 salt = bytes32(tokenId);
+        bytes32 salt = keccak256(abi.encodePacked(tokenId, nft));
 
         uint256 chainId = block.chainid;
         address walletaddress = registry.account(address(implementation), salt, chainId, address(nft), 0);
@@ -110,7 +102,7 @@ contract RedPacketTest is Test {
         returns (bytes4)
     {
         // 记录接收到的代币信息
-        // emit TokenReceived(operator, from, tokenId, data);
+        emit TokenReceived(operator, from, tokenId, data);
         return this.onERC721Received.selector;
     }
 
@@ -120,45 +112,43 @@ contract RedPacketTest is Test {
         address account = factory.getAccount(0);
 
         IERC6551Account accountInstance = IERC6551Account(payable(account));
-        // IERC6551Executable executableAccountInstance = IERC6551Executable(account);
 
         // Get the balance of ERC20 tokens in the account
         uint256 erc20Balance = IERC20(mockERC20).balanceOf(account);
         assertEq(erc20Balance, 1000 * 10 ** 18);
         require(erc20Balance > 0, "No ERC20 tokens to withdraw");
 
-        
-        address recipient1 =0x758e4E534AFBB044Dea64AB07e5d783fEc7e1541;
-        uint256 erc20Balance1= 	1E18;
-
-
         // Prepare the call data for the ERC20 transfer
-        bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, recipient1, erc20Balance1);
 
-         console.logBytes(data);
+        bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, recipient, erc20Balance);
+        (address decodeRecipient, uint256 decodeERC20Balance) = decodeData(data);
+        assertEq(decodeRecipient, recipient);
+        assertEq(decodeERC20Balance, erc20Balance);
 
         // Call the execute function on the ERC6551Account to transfer ERC20 tokens
         vm.prank(recipient);
-        // executableAccountInstance.execute(address(mockERC20), 0, data, 0);
+        accountInstance.execute(address(mockERC20), 0, data, 0);
         assertEq(accountInstance.state(), 1);
         uint256 recipientErc20Balance = IERC20(mockERC20).balanceOf(recipient);
         assertEq(recipientErc20Balance, 1000 * 10 ** 18);
+        uint256 openAfterERC20Balance = IERC20(mockERC20).balanceOf(account);
+        assertEq(openAfterERC20Balance, 0 * 10 ** 18);
     }
 
     function testDeploy() public {
         uint256 chainId = 100;
         address tokenAddress = address(200);
         uint256 tokenId = 300;
-        bytes32 salt = bytes32(uint256(400));
+
         uint256 startGas = gasleft();
+
+        bytes32 salt = bytes32(uint256(type(uint256).max));
+
         address deployedAccount = registry.createAccount(address(implementation), salt, chainId, tokenAddress, tokenId);
         uint256 gasUsed = startGas - gasleft();
-        // Your contract operation here
 
         address registryComputedAddress =
             registry.account(address(implementation), salt, chainId, tokenAddress, tokenId);
-
-        
 
         console.log("Simple gas use:", gasUsed);
         console.log(deployedAccount, "deployedAccount");
@@ -191,7 +181,7 @@ contract RedPacketTest is Test {
         uint256 tokenId,
         bytes32 salt
     ) public {
-        vm.assume(salt <= bytes32(uint256(type(uint160).max)));
+        // vm.assume(salt <= bytes32(uint256(type(uint160).max)));
         address account = registry.account(_implementation, salt, chainId, tokenAddress, tokenId);
 
         address deployedAccount = registry.createAccount(_implementation, salt, chainId, tokenAddress, tokenId);
@@ -206,18 +196,33 @@ contract RedPacketTest is Test {
         assertTrue(account != address(0));
 
         IERC6551Account accountInstance = IERC6551Account(payable(account));
-        // IERC6551Executable executableAccountInstance = IERC6551Executable(account);
 
         assertEq(accountInstance.isValidSigner(vm.addr(1), ""), IERC6551Account.isValidSigner.selector);
 
         vm.deal(account, 1 ether);
 
         vm.prank(vm.addr(1));
-        // executableAccountInstance.execute(payable(vm.addr(2)), 0.5 ether, "", 0);
+        accountInstance.execute(payable(vm.addr(2)), 0.5 ether, "", 0);
 
         assertEq(account.balance, 0.5 ether);
         assertEq(vm.addr(2).balance, 0.5 ether);
         assertEq(accountInstance.state(), 1);
+    }
+
+    function decodeData(bytes memory data) public pure returns (address reci, uint256 erc20Balance) {
+        // 检查 data 的长度是否足够
+        require(data.length >= 56, "Data is too short"); // 4 bytes for selector + 20 bytes for address + 32 bytes for uint256
+
+        // 创建一个新的 bytes 数组来存储解码的数据
+        bytes memory encodedData = new bytes(data.length - 4);
+
+        // 将 data 的内容复制到新的数组中，跳过前 4 个字节
+        for (uint256 i = 4; i < data.length; i++) {
+            encodedData[i - 4] = data[i];
+        }
+
+        // 解码参数
+        (reci, erc20Balance) = abi.decode(encodedData, (address, uint256));
     }
 }
 

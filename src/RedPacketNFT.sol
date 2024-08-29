@@ -15,7 +15,6 @@ contract RedPacketNFT is ERC721, IRedPacketNFT {
     ///////////////////
     uint256 private _nextTokenId;
 
-
     ///////////////////
     // Constructor
     ///////////////////
@@ -29,7 +28,7 @@ contract RedPacketNFT is ERC721, IRedPacketNFT {
     /// @return tokenId The ID of the newly minted NFT
     function mint(address to) public returns (uint256 tokenId) {
         if (to == address(0)) revert RedPacketNFT__InvalidAddress();
-        
+
         tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
         emit RedPacketNFTMinted(to, tokenId);

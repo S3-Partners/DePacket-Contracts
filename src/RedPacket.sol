@@ -15,24 +15,24 @@ contract RedPacket is IRedPacket {
     ///////////////////
     // State Variables
     ///////////////////
-    
+
     /// @notice The factory contract for creating red packets
     IRedPacketFactory public immutable factory;
-    
+
     /// @notice The address of the register
     address public registerAddress;
 
     ///////////////////
     // Errors
     ///////////////////
-    
+
     /// @notice Thrown when an ERC20 transfer fails
     error RedPacket__TransferFailed();
 
     ///////////////////
     // Constructor
     ///////////////////
-    
+
     /// @notice Initializes the RedPacket contract
     /// @param _factory The address of the RedPacketFactory contract
     constructor(address _factory) {
@@ -42,13 +42,12 @@ contract RedPacket is IRedPacket {
     ///////////////////
     // External Functions
     ///////////////////
-    
+
     /// @inheritdoc IRedPacket
-    function createRedPacket(
-        address _recipient,
-        address _erc20,
-        uint256 _amount
-    ) external returns (address walletContract) {
+    function createRedPacket(address _recipient, address _erc20, uint256 _amount)
+        external
+        returns (address walletContract)
+    {
         walletContract = factory.createRedPacket(_recipient);
         _transferUsdtIntoRedPacket(walletContract, _erc20, _amount);
         emit RedPacketCreated(walletContract, _recipient, _erc20, _amount);
@@ -57,16 +56,12 @@ contract RedPacket is IRedPacket {
     ///////////////////
     // Internal Functions
     ///////////////////
-    
+
     /// @notice Transfers ERC20 tokens into the red packet wallet
     /// @param _nftWallet The address of the red packet wallet
     /// @param _erc20 The address of the ERC20 token to be transferred
     /// @param _amount The amount of ERC20 tokens to be transferred
-    function _transferUsdtIntoRedPacket(
-        address _nftWallet,
-        address _erc20,
-        uint256 _amount
-    ) internal {
+    function _transferUsdtIntoRedPacket(address _nftWallet, address _erc20, uint256 _amount) internal {
         bool success = IERC20(_erc20).transferFrom(msg.sender, _nftWallet, _amount);
         if (!success) revert RedPacket__TransferFailed();
     }
