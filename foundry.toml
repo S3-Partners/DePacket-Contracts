@@ -11,6 +11,8 @@ solc = "0.8.20"
 # set EVM version
 # evm_version = "cancun"
 
+gas_reports = ["*"]
+
 ffi = true
 ast = true
 build_info = true

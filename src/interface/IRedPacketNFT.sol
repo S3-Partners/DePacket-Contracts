@@ -2,6 +2,13 @@
 pragma solidity ^0.8.20;
 
 interface IRedPacketNFT {
-    function mint(address, string memory uri) external returns (uint256);
-    function transfer(address from, address to, uint256 tokenId) external;
+
+    ///////////////////
+    // Events
+    ///////////////////
+    event RedPacketNFTMinted(address indexed to, uint256 indexed tokenId);
+
+    
+    function mint(address) external returns (uint256);
+    
 }
