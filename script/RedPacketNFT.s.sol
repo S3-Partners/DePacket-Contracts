@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Script, console} from "forge-std/Script.sol";
 import {RedPacketNFT} from "../src/RedPacketNFT.sol";
 
-contract ReadPacketNFTScript is Script {
+contract RedPacketNFTScript is Script {
     RedPacketNFT public nft;
 
     function setUp() public {}
@@ -16,7 +16,7 @@ contract ReadPacketNFTScript is Script {
 
         nft = new RedPacketNFT();
 
-        console.log("ReadPacketNFT deployed to:", address(nft));
+        console.log("RedPacketNFT deployed to:", address(nft));
 
         vm.stopBroadcast();
     }

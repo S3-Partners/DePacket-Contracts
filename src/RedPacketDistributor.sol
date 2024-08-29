@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 import {IVRFCoordinatorV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/interfaces/IVRFCoordinatorV2Plus.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -24,15 +23,12 @@ contract RedPacketDistributor is VRFConsumerBaseV2Plus {
     using Address for address payable;
 
     uint256 public redPacketCount;
-    bytes32 internal keyHash;
-    uint256 internal fee;
-
-    uint256 s_subscriptionId;
-    address vrfCoordinator = 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B;
-    bytes32 s_keyHash = 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae;
-    uint32 callbackGasLimit = 2_500_000;
-    uint16 requestConfirmations = 3;
-    uint32 numWords = 1;
+    uint256 private immutable i_subscriptionId; // Subscription ID for the Chainlink VRF service
+    address private immutable i_vrfCoordinator; // Sepolia vrfCoordinator
+    bytes32 private immutable i_keyHash; // Sepolia Gas LaneGas Lane
+    uint32 private immutable i_callbackGasLimit; // Gas limit for the VRF callback function
+    uint16 private immutable i_requestConfirmations; // Number of confirmations required for the VRF request
+    uint32 private immutable i_numWords; // Number of random words to request
 
     struct RedPacketInfo {
         uint256 totalAmount;
@@ -52,8 +48,20 @@ contract RedPacketDistributor is VRFConsumerBaseV2Plus {
     event RandomnessRequested(uint256 requestId, address roller);
 
     // https://docs.chain.link/vrf/v2-5/supported-networks#sepolia-testnet
-    constructor(uint256 subscriptionId) VRFConsumerBaseV2Plus(vrfCoordinator) {
-        s_subscriptionId = subscriptionId;
+    constructor(
+        address vrfCoordinator,
+        uint256 subscriptionId,
+        bytes32 keyHash,
+        uint32 callbackGasLimit,
+        uint16 requestConfirmations,
+        uint32 numWords
+    ) VRFConsumerBaseV2Plus(vrfCoordinator) {
+        i_vrfCoordinator = vrfCoordinator;
+        i_subscriptionId = subscriptionId;
+        i_keyHash = keyHash;
+        i_callbackGasLimit = callbackGasLimit;
+        i_requestConfirmations = requestConfirmations;
+        i_numWords = numWords;
     }
 
     function createRedPacket(uint256 numPackets, address _erc20, uint256 _amount) external {
@@ -86,11 +94,11 @@ contract RedPacketDistributor is VRFConsumerBaseV2Plus {
 
         requestId = s_vrfCoordinator.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
-                keyHash: keyHash,
-                subId: s_subscriptionId,
-                requestConfirmations: requestConfirmations,
-                callbackGasLimit: callbackGasLimit,
-                numWords: numWords,
+                keyHash: i_keyHash,
+                subId: i_subscriptionId,
+                requestConfirmations: i_requestConfirmations,
+                callbackGasLimit: i_callbackGasLimit,
+                numWords: i_numWords,
                 // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
                 extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
             })
