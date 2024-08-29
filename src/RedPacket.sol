@@ -44,11 +44,10 @@ contract RedPacket is IRedPacket {
     ///////////////////
 
     /// @inheritdoc IRedPacket
-    function createRedPacket(
-        address _recipient,
-        address _erc20,
-        uint256 _amount
-    ) external returns (address walletContract) {
+    function createRedPacket(address _recipient, address _erc20, uint256 _amount)
+        external
+        returns (address walletContract)
+    {
         walletContract = factory.createRedPacket(_recipient);
         _transferUsdtIntoRedPacket(walletContract, _erc20, _amount);
         emit RedPacketCreated(walletContract, _recipient, _erc20, _amount);
@@ -62,11 +61,7 @@ contract RedPacket is IRedPacket {
     /// @param _nftWallet The address of the red packet wallet
     /// @param _erc20 The address of the ERC20 token to be transferred
     /// @param _amount The amount of ERC20 tokens to be transferred
-    function _transferUsdtIntoRedPacket(
-        address _nftWallet,
-        address _erc20,
-        uint256 _amount
-    ) internal {
+    function _transferUsdtIntoRedPacket(address _nftWallet, address _erc20, uint256 _amount) internal {
         bool success = IERC20(_erc20).transferFrom(msg.sender, _nftWallet, _amount);
         if (!success) revert RedPacket__TransferFailed();
     }

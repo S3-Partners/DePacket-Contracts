@@ -59,17 +59,17 @@ contract RedPacketFactory is Ownable, IRedPacketFactory {
 
     /// @inheritdoc IRedPacketFactory
     function setNftContract(address _nftContract) external onlyOwner {
+        require(_nftContract != address(0), "Invalid address: zero address");
         nftContract = _nftContract;
     }
 
     /// @inheritdoc IRedPacketFactory
-    function createRedPacket(address recipient) external onlyOwner returns (address) {
+    function createRedPacket(address recipient) external returns (address) {
         if (recipient == address(0)) revert RedPacketFactory__InvalidRecipient();
 
         uint256 tokenId = IRedPacketNFT(nftContract).mint(recipient);
-
-        address redPacketWalletAddress =
-            registry.createAccount(implementation, bytes32(tokenId), CHAIN_ID, nftContract, tokenId);
+        bytes32 salt = keccak256(abi.encodePacked(tokenId, nftContract));
+        address redPacketWalletAddress = registry.createAccount(implementation, salt, CHAIN_ID, nftContract, tokenId);
 
         emit RedPacketCreated(redPacketWalletAddress, recipient, tokenId);
 
@@ -82,28 +82,8 @@ contract RedPacketFactory is Ownable, IRedPacketFactory {
 
     /// @inheritdoc IRedPacketFactory
     function getAccount(uint256 _tokenId) external view returns (address) {
-        return registry.account(implementation, bytes32(_tokenId), CHAIN_ID, nftContract, _tokenId);
-    }
-
-    function generateHash(uint256 tokenId, address contractAddress) public pure returns (bytes32) {
-        bytes32 fullHash = keccak256(abi.encodePacked(tokenId, contractAddress));
-
-        bytes20 truncatedHash = bytes20(fullHash);
-
-        bytes32 finalHash = bytes32(uint256(uint160(truncatedHash)));
-
-        bytes32 maxBytes32 = bytes32(uint256(type(uint160).max));
-
-        require(finalHash <= maxBytes32, "Generated hash is greater than or equal to maxBytes32");
-
-        return finalHash;
-    }
-
-    function setNFTContract(address contractAddress) public onlyOwner {
-        require(contractAddress != address(0), "Invalid address: zero address");
-        address oldAddress = nftContract;
-        nftContract = contractAddress;
-        emit NFTContractUpdated(oldAddress, contractAddress);
+        bytes32 salt = keccak256(abi.encodePacked(_tokenId, nftContract));
+        return registry.account(implementation, salt, CHAIN_ID, nftContract, _tokenId);
     }
 
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
@@ -116,7 +96,6 @@ contract RedPacketFactory is Ownable, IRedPacketFactory {
     }
 
     // Event declaration
-    event RedPacketCreated(address indexed redPacketAddress, address indexed recipient, uint256 tokenId);
     event TokenReceived(address operator, address from, uint256 tokenId, bytes data);
     event NFTContractUpdated(address indexed oldAddress, address indexed newAddress);
 }

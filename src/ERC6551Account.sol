@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "./interface/IERC6551Account.sol";
 
-
 contract ERC6551Account is IERC165, IERC1271, IERC6551Account {
     uint256 immutable deploymentChainId = block.chainid;
 
