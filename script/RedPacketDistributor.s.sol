@@ -17,9 +17,9 @@ contract RedPacketDistributorScript is Script {
         subscriptionId = vm.envUint("SUBSCRIPTIONID");
         vrfCoordinator = vm.envAddress("VRFCOORDINATOR");
         keyHash = vm.envBytes32("KEYHASH");
-        callbackGasLimit = uint32(vm.envUint("CALLBACKGASLIMIT"));
-        requestConfirmations = uint16(vm.envUint("REQUESTCONFIRMATIONS"));
-        numWords = uint32(vm.envUint("NUMWORDS"));
+        callbackGasLimit = 2_500_000;
+        requestConfirmations = 3;
+        numWords = 1;
     }
 
     function run() public {
