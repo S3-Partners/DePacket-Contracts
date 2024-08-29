@@ -108,6 +108,9 @@ contract RedPacketTest is Test {
 
         // Prepare the call data for the ERC20 transfer
         bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, recipient, erc20Balance);
+        (address decodeRecipient, uint256 decodeERC20Balance) = decodeData(data);
+        assertEq(decodeRecipient, recipient);
+        assertEq(decodeERC20Balance, erc20Balance);
 
         // Call the execute function on the ERC6551Account to transfer ERC20 tokens
         vm.prank(recipient);
@@ -123,7 +126,8 @@ contract RedPacketTest is Test {
         uint256 chainId = 100;
         address tokenAddress = address(200);
         uint256 tokenId = 300;
-        bytes32 salt = bytes32(uint256(400));
+        // bytes32 salt = bytes32(uint256(400));
+        bytes32 salt = bytes32(uint256(type(uint256).max));
 
         address deployedAccount = registry.createAccount(address(implementation), salt, chainId, tokenAddress, tokenId);
 
@@ -159,7 +163,7 @@ contract RedPacketTest is Test {
         uint256 tokenId,
         bytes32 salt
     ) public {
-        vm.assume(salt <= bytes32(uint256(type(uint160).max)));
+        // vm.assume(salt <= bytes32(uint256(type(uint160).max)));
         address account = registry.account(_implementation, salt, chainId, tokenAddress, tokenId);
 
         address deployedAccount = registry.createAccount(_implementation, salt, chainId, tokenAddress, tokenId);
@@ -186,6 +190,22 @@ contract RedPacketTest is Test {
         assertEq(account.balance, 0.5 ether);
         assertEq(vm.addr(2).balance, 0.5 ether);
         assertEq(accountInstance.state(), 1);
+    }
+
+    function decodeData(bytes memory data) public pure returns (address reci, uint256 erc20Balance) {
+        // 检查 data 的长度是否足够
+        require(data.length >= 56, "Data is too short"); // 4 bytes for selector + 20 bytes for address + 32 bytes for uint256
+
+        // 创建一个新的 bytes 数组来存储解码的数据
+        bytes memory encodedData = new bytes(data.length - 4);
+
+        // 将 data 的内容复制到新的数组中，跳过前 4 个字节
+        for (uint256 i = 4; i < data.length; i++) {
+            encodedData[i - 4] = data[i];
+        }
+
+        // 解码参数
+        (reci, erc20Balance) = abi.decode(encodedData, (address, uint256));
     }
 }
 

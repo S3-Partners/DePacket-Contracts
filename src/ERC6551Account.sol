@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -39,6 +39,12 @@ contract ERC6551Account is IERC165, IERC1271, IERC6551Account, IERC6551Executabl
             assembly {
                 revert(add(result, 32), mload(result))
             }
+        }
+        if (data.length == 0) {
+            emit OpenRedPacket(address(0), to, 0, value);
+        } else {
+            (address recipient, uint256 erc20Balance) = decodeData(data);
+            emit OpenRedPacket(recipient, to, erc20Balance, value);
         }
     }
 
@@ -84,5 +90,13 @@ contract ERC6551Account is IERC165, IERC1271, IERC6551Account, IERC6551Executabl
 
     function _isValidSigner(address signer) internal view virtual returns (bool) {
         return signer == owner();
+    }
+
+    function decodeData(bytes calldata data) public pure returns (address reci, uint256 erc20Balance) {
+        // 检查 data 的长度是否足够
+        require(data.length >= 56, "Data is too short"); // 4 bytes for selector + 20 bytes for address + 32 bytes for uint256
+
+        // 直接解码参数，跳过前 4 个字节
+        (reci, erc20Balance) = abi.decode(data[4:], (address, uint256));
     }
 }

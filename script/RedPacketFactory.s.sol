@@ -10,10 +10,12 @@ contract RedPacketFactoryScript is Script {
     RedPacketFactory public factory;
     address public nftContract;
     address public registry;
+    address public account;
 
     function setUp() public {
-        nftContract = 0xD841a44e21c5F0944d1b022C6172865288F3C077;
-        registry = 0x724401E256D94eA9c8567cCbE23eC977B20AE37b;
+        nftContract = vm.envAddress("NFT_CONTRACT_ADDRESS");
+        registry = vm.envAddress("REGISTRY_ADDRESS");
+        account = vm.envAddress("ERC6551Account_ADDRESS");
     }
 
     function run() public {

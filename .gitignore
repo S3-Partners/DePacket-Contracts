@@ -17,3 +17,5 @@ docs/
 broadcast/
 
 src/artifacts/
+.states/
+.idea/

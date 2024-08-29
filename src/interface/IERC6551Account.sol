@@ -9,4 +9,6 @@ interface IERC6551Account {
     function state() external view returns (uint256);
 
     function isValidSigner(address signer, bytes calldata context) external view returns (bytes4 magicValue);
+
+    event OpenRedPacket(address indexed recipient, address indexed erc20, uint256 amount, uint256 value);
 }
