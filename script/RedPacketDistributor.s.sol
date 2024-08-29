@@ -6,7 +6,7 @@ import {RedPacketDistributor} from "../src/RedPacketDistributor.sol";
 import {ReadPacketNFT} from "../src/ReadPacketNFT.sol";
 import {ERC6551Registry} from "../src/ERC6551Registry.sol";
 
-contract RedPacketFactoryScript is Script {
+contract RedPacketDistributorScript is Script {
     RedPacketDistributor public redpacketdistributor;
     uint256 public subscriptionId;
 
