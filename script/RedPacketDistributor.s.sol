@@ -6,10 +6,20 @@ import {RedPacketDistributor} from "../src/RedPacketDistributor.sol";
 
 contract RedPacketDistributorScript is Script {
     RedPacketDistributor public redpacketdistributor;
-    uint256 public subscriptionId;
+    address vrfCoordinator;
+    uint256 subscriptionId;
+    bytes32 keyHash;
+    uint32 callbackGasLimit;
+    uint16 requestConfirmations;
+    uint32 numWords;
 
     function setUp() public {
         subscriptionId = vm.envUint("SUBSCRIPTIONID");
+        vrfCoordinator = vm.envAddress("VRFCOORDINATOR");
+        keyHash = vm.envBytes32("KEYHASH");
+        callbackGasLimit = 2_500_000;
+        requestConfirmations = 3;
+        numWords = 1;
     }
 
     function run() public {
@@ -17,7 +27,9 @@ contract RedPacketDistributorScript is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        redpacketdistributor = new RedPacketDistributor(subscriptionId);
+        redpacketdistributor = new RedPacketDistributor(
+            vrfCoordinator, subscriptionId, keyHash, callbackGasLimit, requestConfirmations, numWords
+        );
 
         console.log("RedPacketDistributor deployed to:", address(redpacketdistributor));
 

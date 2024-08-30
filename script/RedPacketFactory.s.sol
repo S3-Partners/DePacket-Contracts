@@ -15,7 +15,7 @@ contract RedPacketFactoryScript is Script {
     function setUp() public {
         nftContract = vm.envAddress("NFT_CONTRACT_ADDRESS");
         registry = vm.envAddress("REGISTRY_ADDRESS");
-        impelementation = vm.envAddress("ERC6551Account_ADDRESS");
+        impelementation = vm.envAddress("ERC6551ACCOUNT_ADDRESS");
     }
 
     function run() public {
