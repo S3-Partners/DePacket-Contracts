@@ -10,12 +10,12 @@ contract RedPacketFactoryScript is Script {
     RedPacketFactory public factory;
     address public nftContract;
     address public registry;
-    address public impelementation;
+    address public implementation;
 
     function setUp() public {
         nftContract = vm.envAddress("NFT_CONTRACT_ADDRESS");
         registry = vm.envAddress("REGISTRY_ADDRESS");
-        impelementation = vm.envAddress("ERC6551ACCOUNT_ADDRESS");
+        implementation = vm.envAddress("ERC6551ACCOUNT_ADDRESS");
     }
 
     function run() public {
@@ -23,7 +23,7 @@ contract RedPacketFactoryScript is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        factory = new RedPacketFactory(nftContract, registry, impelementation);
+        factory = new RedPacketFactory(nftContract, registry, implementation);
 
         console.log("RedPacketFactory deployed to:", address(factory));
 

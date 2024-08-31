@@ -72,7 +72,6 @@ contract RedPacketTest is Test {
         mockERC20.approve(address(redPacket), amount);
 
         uint256 startGas = gasleft();
-        // Your contract operation here
 
         // Create red packet
         address wallet = redPacket.createRedPacket(recipient, address(mockERC20), amount);
