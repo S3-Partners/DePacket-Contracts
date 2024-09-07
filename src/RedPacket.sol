@@ -11,10 +11,11 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /// @title RedPacket
 /// @notice A contract for creating and managing red packets
-contract RedPacket is IRedPacket {
+contract RedPacket  {
     ///////////////////
     // State Variables
     ///////////////////
+    event RedPacketCreated(address indexed walletContract, address indexed recipient, uint256 cover, uint256 amount);
 
     /// @notice The factory contract for creating red packets
     IRedPacketFactory public immutable factory;
@@ -43,14 +44,20 @@ contract RedPacket is IRedPacket {
     // External Functions
     ///////////////////
 
-    /// @inheritdoc IRedPacket
-    function createRedPacket(address _recipient, address _erc20, uint256 _amount)
+    
+    function createRedPacketWithEth(address _recipient, uint256 _cover)
+
+        payable
         external
         returns (address walletContract)
     {
-        walletContract = factory.createRedPacket(_recipient);
-        _transferERC20IntoRedPacket(walletContract, _erc20, _amount);
-        emit RedPacketCreated(walletContract, _recipient, _erc20, _amount);
+        walletContract = factory.createRedPacket(_recipient, _cover);
+
+        (bool res, ) =walletContract.call{value: msg.value}("");
+
+        if (!res) revert RedPacket__TransferFailed();
+        
+        emit RedPacketCreated(walletContract, _recipient, _cover, msg.value);
     }
 
     ///////////////////

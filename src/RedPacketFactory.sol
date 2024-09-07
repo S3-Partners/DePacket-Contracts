@@ -32,15 +32,22 @@ contract RedPacketFactory is Ownable, IRedPacketFactory {
 
     /// @notice Thrown when an invalid recipient address is provided
     error RedPacketFactory__InvalidRecipient();
+    error RedPacketFactory__InvalidCover();
 
     ///////////////////
     // Constructor
     ///////////////////
 
-    /// @notice Initializes the RedPacketFactory contract
-    /// @param _nftContract The address of the NFT contract
-    /// @param _registry The address of the ERC6551Registry contract
-    /// @param _implementation The address of the red packet wallet implementation
+
+
+    // use uint256 to mapping cover to nft address
+    mapping(uint256 => address) public uinttoNftAdress;
+   
+
+    function setCoverToNft(uint256 cover,address nftAddress) external onlyOwner {
+        uinttoNftAdress[cover] = nftAddress;
+    }
+
     constructor(address _nftContract, address _registry, address _implementation) Ownable(msg.sender) {
         implementation = _implementation;
         nftContract = _nftContract;
@@ -63,11 +70,18 @@ contract RedPacketFactory is Ownable, IRedPacketFactory {
         nftContract = _nftContract;
     }
 
-    /// @inheritdoc IRedPacketFactory
-    function createRedPacket(address recipient) external returns (address) {
+
+    function createRedPacket(address recipient,uint256 cover) external returns (address) {
+
+
+        address nftAddress = uinttoNftAdress[cover];
+        
+        if (nftAddress == address(0)) revert RedPacketFactory__InvalidCover();
+
         if (recipient == address(0)) revert RedPacketFactory__InvalidRecipient();
 
         uint256 tokenId = IRedPacketNFT(nftContract).mint(recipient);
+
         bytes32 salt = keccak256(abi.encodePacked(tokenId, nftContract));
         address redPacketWalletAddress = registry.createAccount(implementation, salt, CHAIN_ID, nftContract, tokenId);
 

@@ -4,7 +4,8 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./interface/IRedPacketNFT.sol";
 
-contract RedPacketNFT is ERC721, IRedPacketNFT {
+contract RedPacketNFT is ERC721 {
+    event RedPacketNFTMinted(address indexed to, uint256 indexed tokenId);
     ///////////////////
     // Errors
     ///////////////////
@@ -15,10 +16,13 @@ contract RedPacketNFT is ERC721, IRedPacketNFT {
     ///////////////////
     uint256 private _nextTokenId;
 
+    string private constant BASE_URI =
+        "https://coral-imperial-mule-141.mypinata.cloud/ipfs/QmR5LCfHvT4NaCPewACgDTMRCRqfjBk8d1Jt9xdKWSdzGr";
+
     ///////////////////
     // Constructor
     ///////////////////
-    constructor() ERC721("RedPacketNFT", "RPNFT") {}
+    constructor() ERC721("RedPacketNFTMOON", "RPNFTMOON") {}
 
     ///////////////////
     // Public Functions
@@ -32,5 +36,9 @@ contract RedPacketNFT is ERC721, IRedPacketNFT {
         tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
         emit RedPacketNFTMinted(to, tokenId);
+    }
+
+    function tokenURI(uint256) public pure override returns (string memory) {
+        return BASE_URI;
     }
 }

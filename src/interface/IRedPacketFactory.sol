@@ -29,7 +29,7 @@ interface IRedPacketFactory {
     /// @notice Creates a new red packet
     /// @param recipient The address of the recipient of the red packet
     /// @return The address of the newly created red packet wallet
-    function createRedPacket(address recipient) external returns (address);
+    function createRedPacket(address recipient,uint256 cover) external returns (address);
 
     ///////////////////
     // External View Functions
